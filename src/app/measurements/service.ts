@@ -11,7 +11,8 @@ async function getById(id: string): Promise<IMeasurement|null> {
 
 interface ICreateMeasurement {
     name: string,
-    value: string
+    value: string,
+    status: boolean
 }
 
 async function create(measurement: ICreateMeasurement) {

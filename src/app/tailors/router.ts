@@ -1,11 +1,11 @@
 import {Router, Request, Response} from 'express'
-import measurementService from './service'
+import tailorService from './service'
 
 const router: Router = Router();
 
 router.get('/', (req: Request, res: Response) => {
-    measurementService.getAll().then(measurements => {
-        res.status(200).json(measurements);
+    tailorService.getAll().then(tailors => {
+        res.status(200).json(tailors);
     }).catch((err) => {
         res.status(400).json(`Error : ${err}`);
     })
@@ -13,22 +13,21 @@ router.get('/', (req: Request, res: Response) => {
 
 router.get('/:id', (req: Request, res: Response) => {
     const id: string = req.params.id;
-    measurementService.getById(id).then(measurement => {
-        res.status(200).json(measurement);
+    tailorService.getById(id).then(tailor => {
+        res.status(200).json(tailor);
     }).catch((err) => {
         res.status(400).json(`Error : ${err}`);
     })
 })
 
-interface ICreateMeasurement {
+interface ICreateTailor {
     name: string,
-    value: string,
-    status: boolean
+    value: string
 }
 
 router.post('/', (req: Request, res: Response) => {
-    const measurement : ICreateMeasurement = req.body;
-    measurementService.create(measurement).then(result => {
+    const tailor : ICreateTailor = req.body;
+    tailorService.create(tailor).then(result => {
         res.status(200).json(result);
     }).catch((err) => {
         res.status(400).json(`Error : ${err}`);
@@ -37,8 +36,8 @@ router.post('/', (req: Request, res: Response) => {
 
 router.put('/:id', (req: Request, res: Response) => {
     const id: string = req.params.id;
-    const measurement : ICreateMeasurement = req.body;
-    measurementService.updateOne(id, measurement).then(result => {
+    const tailor : ICreateTailor = req.body;
+    tailorService.updateOne(id, tailor).then(result => {
         res.status(200).json(result);
     }).catch((err) => {
         res.status(400).json(`Error : ${err}`);
@@ -47,7 +46,7 @@ router.put('/:id', (req: Request, res: Response) => {
 
 router.delete('/:id', (req: Request, res: Response) => {
     const id: string = req.params.id;
-    measurementService.deleteOne(id).then(result => {
+    tailorService.deleteOne(id).then(result => {
         res.status(200).json(result);
     }).catch((err) => {
         res.status(400).json(`Error : ${err}`);

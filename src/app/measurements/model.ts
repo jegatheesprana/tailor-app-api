@@ -14,6 +14,10 @@ const measurementSchema = new Schema<IMeasurement>({
     value: {
         type: String
     },
+    status: {
+        type: Boolean,
+        default: true
+    }
 });
 
 const Measurement = model<IMeasurement>('Measurement', measurementSchema);

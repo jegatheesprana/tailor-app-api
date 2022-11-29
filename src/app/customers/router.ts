@@ -1,11 +1,11 @@
 import {Router, Request, Response} from 'express'
-import measurementService from './service'
+import customerService from './service'
 
 const router: Router = Router();
 
 router.get('/', (req: Request, res: Response) => {
-    measurementService.getAll().then(measurements => {
-        res.status(200).json(measurements);
+    customerService.getAll().then(customers => {
+        res.status(200).json(customers);
     }).catch((err) => {
         res.status(400).json(`Error : ${err}`);
     })
@@ -13,22 +13,21 @@ router.get('/', (req: Request, res: Response) => {
 
 router.get('/:id', (req: Request, res: Response) => {
     const id: string = req.params.id;
-    measurementService.getById(id).then(measurement => {
-        res.status(200).json(measurement);
+    customerService.getById(id).then(customer => {
+        res.status(200).json(customer);
     }).catch((err) => {
         res.status(400).json(`Error : ${err}`);
     })
 })
 
-interface ICreateMeasurement {
+interface ICreateCustomer {
     name: string,
-    value: string,
-    status: boolean
+    value: string
 }
 
 router.post('/', (req: Request, res: Response) => {
-    const measurement : ICreateMeasurement = req.body;
-    measurementService.create(measurement).then(result => {
+    const customer : ICreateCustomer = req.body;
+    customerService.create(customer).then(result => {
         res.status(200).json(result);
     }).catch((err) => {
         res.status(400).json(`Error : ${err}`);
@@ -37,8 +36,8 @@ router.post('/', (req: Request, res: Response) => {
 
 router.put('/:id', (req: Request, res: Response) => {
     const id: string = req.params.id;
-    const measurement : ICreateMeasurement = req.body;
-    measurementService.updateOne(id, measurement).then(result => {
+    const customer : ICreateCustomer = req.body;
+    customerService.updateOne(id, customer).then(result => {
         res.status(200).json(result);
     }).catch((err) => {
         res.status(400).json(`Error : ${err}`);
@@ -47,7 +46,7 @@ router.put('/:id', (req: Request, res: Response) => {
 
 router.delete('/:id', (req: Request, res: Response) => {
     const id: string = req.params.id;
-    measurementService.deleteOne(id).then(result => {
+    customerService.deleteOne(id).then(result => {
         res.status(200).json(result);
     }).catch((err) => {
         res.status(400).json(`Error : ${err}`);
