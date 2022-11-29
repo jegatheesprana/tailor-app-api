@@ -1,13 +1,13 @@
 import { Schema, model, Document } from 'mongoose';
 
-interface IPatient extends Document {
+interface IUser extends Document {
     username: string,
     name: string,
     phoneNumber: string,
     password: string
 }
 
-const patientSchema = new Schema<IPatient>({
+const userSchema = new Schema<IUser>({
     username: {
         type: String,
         required: true,
@@ -24,6 +24,6 @@ const patientSchema = new Schema<IPatient>({
     }
 });
 
-const Patient = model<IPatient>('Patient', patientSchema);
+const User = model<IUser>('User', userSchema);
 
-export default Patient;
+export default User;

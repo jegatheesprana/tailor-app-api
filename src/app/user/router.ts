@@ -1,53 +1,20 @@
 import {Router, Request, Response} from 'express'
-import Patient from '../models/patient.model';
-import { Appointment } from '../models/appointment.model'
+import User from './model';
+import { Appointment } from '../../models/appointment.model'
 import jwt, { Secret, JwtPayload, SignOptions, DecodeOptions } from 'jsonwebtoken'
-import Stripe from 'stripe';
-import { v4 as uuidv4 } from 'uuid';
 import { hash, compare, genSalt } from 'bcrypt';
-
-const stripe = new Stripe("sk_test_51IabQNSCj4BydkZ38AsoDragCM19yaMzGyBVng5KUZnCNrxCJuj308HmdAvoRcUEe2PEdoORMosOaRz1Wl8UX0Gt00FCuSwYpz", {
-    // @ts-ignore
-    apiVersion: null,
-  })
 
 const router: Router = Router();
 
-router.route('/').get((req: Request, res: Response) => {
-    Patient.find().then(patients => {
-        res.status(200).json(patients);
+router.get('/', (req: Request, res: Response) => {
+    User.find().then(users => {
+        res.status(200).json(users);
     }).catch((err) => {
         res.status(400).json(`Error : ${err}`);
     })
 })
 
-
-
-// To update a patient's phone number
-router.route('/update-phone').put((req: Request, res: Response) => {
-    const patientId = req.body.patientId;
-
-    Patient.findOne({ _id: patientId }).then(patient => {
-        if (patient) {
-            patient.phoneNumber = req.body.phoneNumber;
-
-            patient.save().then(() => {
-                res.status(200).json('Patient\'s phone number updated');
-            }).catch(err => {
-                res.status(400).json({ message: `Error : ${err}` });
-            });
-        }
-    })
-})
-
-interface CustomPayload extends JwtPayload {
-    email: string,
-    name: string,
-    picture: string,
-    sub: string
-}
-
-router.route('/signup').post(async (req: Request, res: Response)=> {
+router.post('/signup', async (req: Request, res: Response)=> {
     const username = req.body.username; // Required.. can't be undefined
 	const password = req.body.password;
 	const name = req.body.name;
@@ -57,17 +24,17 @@ router.route('/signup').post(async (req: Request, res: Response)=> {
     const salt = await genSalt(10);
     const hashedPassword = await hash(password, salt);
 
-	const newPatient = new Patient({
+	const newUser = new User({
 		username,
 		password: hashedPassword,
 		name,
 		phoneNumber,
 	});
 
-	newPatient
+	newUser
 		.save()
 		.then(() => {
-			res.json("Patient added");
+			res.json("User added");
 			// console.log(`${newDoctor} added!`)
 		})
 		.catch((err) => {
@@ -76,31 +43,31 @@ router.route('/signup').post(async (req: Request, res: Response)=> {
 		});
 })
 
-router.route("/login").post(async (req: Request, res: Response) => {
+router.post("/login", async (req: Request, res: Response) => {
 	try {
 		const username = req.body.username;
 		const plainTextPassword = req.body.password;
 
-		const patient = await Patient.findOne({
+		const user = await User.findOne({
 			username: username,
 		});
 
-        console.log(patient)
+        console.log(user)
 
-		if (patient === null || !(await compare(plainTextPassword, patient.password))) {
+		if (user === null || !(await compare(plainTextPassword, user.password))) {
 			return res.status(201).json({ message: "wrong username or password" });
 		}
 
 		// Doctor found, return the token to the client side
 		const token = jwt.sign(
-			JSON.stringify(patient),
+			JSON.stringify(user),
 			process.env.KEY as Secret, 
 			{
 				algorithm: process.env.ALGORITHM as string,
 			} as SignOptions
 		);
 
-		return res.status(200).json({ token: token.toString(), user: {...patient?.toJSON(), type: 'patient'} });
+		return res.status(200).json({ token: token.toString(), user: {...user?.toJSON(), type: 'user'} });
 
 	} catch (err) {
 		console.log(err);
@@ -108,16 +75,34 @@ router.route("/login").post(async (req: Request, res: Response) => {
 	}
 });
 
-router.route('/getPatientDetails/:patientId').get(async (req: Request, res: Response) => {
-    try {
-        const patientId = req.params.patientId;
-        const patient = await Patient.findOne({ _id: patientId });
 
-        if (patient) {
-            return res.status(200).json(patient);
+// To update a user's phone number
+router.put('/update-phone', (req: Request, res: Response) => {
+    const userId = req.body.userId;
+
+    User.findOne({ _id: userId }).then(user => {
+        if (user) {
+            user.phoneNumber = req.body.phoneNumber;
+
+            user.save().then(() => {
+                res.status(200).json('User\'s phone number updated');
+            }).catch(err => {
+                res.status(400).json({ message: `Error : ${err}` });
+            });
+        }
+    })
+})
+
+router.get('/getUserDetails/:userId', async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId;
+        const user = await User.findOne({ _id: userId });
+
+        if (user) {
+            return res.status(200).json(user);
         }
         else {
-            return res.status(201).json({ message: "Patient not found!" });
+            return res.status(201).json({ message: "User not found!" });
         }
     }
     catch (err) {
@@ -126,10 +111,10 @@ router.route('/getPatientDetails/:patientId').get(async (req: Request, res: Resp
     }
 })
 
-router.route('/previous-appointments').post(async (req: Request, res: Response) => {
+router.post('/previous-appointments', async (req: Request, res: Response) => {
     try {
-        const patientId = req.body.patientId;
-        const appointments = await Appointment.find({ patientId: patientId });
+        const userId = req.body.userId;
+        const appointments = await Appointment.find({ userId: userId });
 
         // Get current dateTime
         const date = new Date()
@@ -162,10 +147,10 @@ router.route('/previous-appointments').post(async (req: Request, res: Response) 
     }
 })
 
-router.route('/upcoming-appointments').post(async (req: Request, res: Response) => {
+router.post('/upcoming-appointments', async (req: Request, res: Response) => {
     try {
-        const patientId = req.body.patientId;
-        const appointments = await Appointment.find({ patientId: patientId });
+        const userId = req.body.userId;
+        const appointments = await Appointment.find({ userId: userId });
 
         // Get current dateTime
         const date = new Date()
@@ -196,52 +181,6 @@ router.route('/upcoming-appointments').post(async (req: Request, res: Response) 
         console.log(err)
         res.status(400).json(err)
     }
-})
-
-router.route("/payment").post(async (req: Request, res: Response) => {
-    const { finalBalnce, token } = req.body;
-    // console.log(product);
-    const idempotencyKey = uuidv4();
-
-    return stripe.customers
-        .create({
-            email: token.email,
-            source: token.id
-        })
-        .then(customer => {
-            stripe.charges
-                .create(
-                    {
-                        amount: finalBalnce * 100,
-                        currency: 'usd',
-                        customer: customer.id,
-                        receipt_email: token.email,
-                        description: `Booked Appointement Successfully`,
-                        shipping: {
-                            name: token.card.name,
-                            address: {
-                                line1: token.card.address_line1,
-                                line2: token.card.address_line2,
-                                city: token.card.address_city,
-                                country: token.card.address_country,
-                                postal_code: token.card.address_zip
-                            }
-                        }
-                    },
-                    {
-                        idempotencyKey
-                    }
-                )
-                .then(result => res.status(200).json(result))
-                .catch(err => {
-                    console.log(`Error : ${err}`);
-                    res.status(400).json(err);
-                });
-        })
-        .catch((err) => {
-            console.log(err);
-            res.status(400).json(err);
-        });
 })
 
 
