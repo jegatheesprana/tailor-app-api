@@ -15,20 +15,20 @@ router.get('/', (req: Request, res: Response) => {
 })
 
 router.post('/signup', async (req: Request, res: Response)=> {
-    const username = req.body.username; // Required.. can't be undefined
+    const email = req.body.email; // Required.. can't be undefined
 	const password = req.body.password;
 	const name = req.body.name;
-	const phoneNumber = req.body.phoneNumber;
+	const shopName = req.body.shopName;
 
     // Hash password
     const salt = await genSalt(10);
     const hashedPassword = await hash(password, salt);
 
 	const newUser = new User({
-		username,
+		email,
 		password: hashedPassword,
 		name,
-		phoneNumber,
+		shopName,
 	});
 
 	newUser
@@ -45,17 +45,17 @@ router.post('/signup', async (req: Request, res: Response)=> {
 
 router.post("/login", async (req: Request, res: Response) => {
 	try {
-		const username = req.body.username;
+		const email = req.body.email;
 		const plainTextPassword = req.body.password;
 
 		const user = await User.findOne({
-			username: username,
+			email,
 		});
 
         console.log(user)
 
 		if (user === null || !(await compare(plainTextPassword, user.password))) {
-			return res.status(201).json({ message: "wrong username or password" });
+			return res.status(201).json({ message: "wrong email or password" });
 		}
 
 		// Doctor found, return the token to the client side
@@ -82,7 +82,7 @@ router.put('/update-phone', (req: Request, res: Response) => {
 
     User.findOne({ _id: userId }).then(user => {
         if (user) {
-            user.phoneNumber = req.body.phoneNumber;
+            user.shopName = req.body.shopName;
 
             user.save().then(() => {
                 res.status(200).json('User\'s phone number updated');
